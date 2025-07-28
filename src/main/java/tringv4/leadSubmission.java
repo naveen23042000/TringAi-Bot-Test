@@ -2,12 +2,15 @@ package tringv4;
 
 import com.aventstack.extentreports.*;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.aventstack.extentreports.MediaEntityBuilder;
 
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.*;
 
@@ -24,17 +27,20 @@ public class leadSubmission {
     }
 
     public static void main(String[] args) {
-        // 📄 Setup Extent Report
-    	ExtentSparkReporter htmlReporter = new ExtentSparkReporter("leadSubmissionReport.html");
+        // 📁 Setup report directory with timestamp
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String reportDir = System.getProperty("user.dir") + "/test-output/leadReport";
+        new File(reportDir).mkdirs();
 
+        // 📄 Setup Extent Report
+        ExtentSparkReporter spark = new ExtentSparkReporter(reportDir + "/leadSubmissionReport_" + timestamp + ".html");
         ExtentReports extent = new ExtentReports();
-        extent.attachReporter(htmlReporter);
+        extent.attachReporter(spark);
         ExtentTest test = extent.createTest("Lead Submission Bot", "Automated chatbot lead submission test");
 
         // 🧪 Setup WebDriver
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--incognito");
-
         Map<String, Object> prefs = new HashMap<>();
         prefs.put("credentials_enable_service", false);
         prefs.put("profile.password_manager_enabled", false);
@@ -44,7 +50,7 @@ public class leadSubmission {
         WebDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-    //using try catch
+
         try {
             test.info("Navigating to login page");
             driver.get("https://app.tringlabs.ai/auth/signin");
@@ -57,12 +63,11 @@ public class leadSubmission {
 
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Login']")))
                 .click();
-            test.pass("Login successful");
+            test.pass("✅ Login successful");
 
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']"))).click();
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//input[@placeholder='Search bot...'])[2]")))
                 .sendKeys("TNPSC");
-
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[contains(text(),'View')]"))).click();
 
             String originalWindow = driver.getWindowHandle();
@@ -79,11 +84,11 @@ public class leadSubmission {
             String previewUrl = driver.getCurrentUrl();
             if (previewUrl.contains("mode=preview")) {
                 previewUrl = previewUrl.replaceAll("[&?]mode=preview", "")
-                                       .replaceAll("\\?&", "?")
-                                       .replaceAll("&&", "&")
-                                       .replaceAll("\\?$", "");
+                        .replaceAll("\\?&", "?")
+                        .replaceAll("&&", "&")
+                        .replaceAll("\\?$", "");
                 driver.get(previewUrl);
-                test.info("Preview URL cleaned and redirected");
+                test.info("🔄 Cleaned preview URL");
             }
 
             WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(60));
@@ -91,14 +96,14 @@ public class leadSubmission {
             driver.switchTo().frame(iframe);
 
             WebElement inputField = longWait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//input[@placeholder='Type a message...']")));
+                    By.xpath("//input[@placeholder='Type a message...']")));
             inputField.clear();
             inputField.sendKeys("Schedule Site Visit");
-            Thread.sleep(20000);
+            Thread.sleep(20000); // wait for bot response
             inputField.sendKeys(Keys.ENTER);
-            test.pass("Bot message sent: Schedule Site Visit");
+            test.pass("📝 Sent: Schedule Site Visit");
 
-            // Random data
+            // 🔀 Random user data
             String randomName = generateRandomName(7);
             String randomEmail = randomName.toLowerCase() + "@example.com";
             String randomPhone = "9" + (long)(Math.random() * 1_000_000_000L);
@@ -112,8 +117,7 @@ public class leadSubmission {
                     .sendKeys(randomPhone);
 
             WebElement submitBtn = formWait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//button[normalize-space()='Submit']")));
-
+                    By.xpath("//button[normalize-space()='Submit']")));
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", submitBtn);
             Thread.sleep(1000);
             try {
@@ -122,14 +126,21 @@ public class leadSubmission {
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", submitBtn);
             }
 
-            test.pass("Lead form submitted with name: " + randomName +
-                      ", email: " + randomEmail +   
-                      ", phone: " + randomPhone);
+            test.pass("✅ Lead submitted: " + randomName + ", " + randomEmail + ", " + randomPhone);
 
         } catch (Exception e) {
-            test.fail("❌ Exception occurred: " + e.getMessage());
+            try {
+                File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+                String screenshotPath = reportDir + "/error_screenshot.png";
+                File dest = new File(screenshotPath);
+                org.openqa.selenium.io.FileHandler.copy(screenshot, dest);
+                test.fail("❌ Exception occurred: " + e.getMessage(),
+                          MediaEntityBuilder.createScreenCaptureFromPath("leadReport/error_screenshot.png").build());
+            } catch (Exception screenshotException) {
+                test.fail("❌ Error during screenshot: " + screenshotException.getMessage());
+            }
         } finally {
-            // driver.quit();
+            // driver.quit(); // uncomment for CI/CD runs
             extent.flush();
         }
     }
