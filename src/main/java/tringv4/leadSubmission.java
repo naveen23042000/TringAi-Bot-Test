@@ -1,5 +1,8 @@
 package tringv4;
 
+import com.aventstack.extentreports.*;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -9,7 +12,26 @@ import java.time.Duration;
 import java.util.*;
 
 public class leadSubmission {
+
+    public static String generateRandomName(int length) {
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        StringBuilder name = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < length; i++) {
+            name.append(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+        return name.toString();
+    }
+
     public static void main(String[] args) {
+        // 📄 Setup Extent Report
+    	ExtentSparkReporter htmlReporter = new ExtentSparkReporter("leadSubmissionReport.html");
+
+        ExtentReports extent = new ExtentReports();
+        extent.attachReporter(htmlReporter);
+        ExtentTest test = extent.createTest("Lead Submission Bot", "Automated chatbot lead submission test");
+
+        // 🧪 Setup WebDriver
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--incognito");
 
@@ -21,10 +43,10 @@ public class leadSubmission {
 
         WebDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         try {
+            test.info("Navigating to login page");
             driver.get("https://app.tringlabs.ai/auth/signin");
 
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='email']")))
@@ -35,10 +57,9 @@ public class leadSubmission {
 
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Login']")))
                 .click();
-            System.out.println("✅ Logged in.");
+            test.pass("Login successful");
 
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']"))).click();
-
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//input[@placeholder='Search bot...'])[2]")))
                 .sendKeys("TNPSC");
 
@@ -55,73 +76,61 @@ public class leadSubmission {
                 }
             }
 
-            System.out.println("✅ Switched to preview tab.");
             String previewUrl = driver.getCurrentUrl();
-
-            // Remove mode=preview if present in the URL
             if (previewUrl.contains("mode=preview")) {
                 previewUrl = previewUrl.replaceAll("[&?]mode=preview", "")
                                        .replaceAll("\\?&", "?")
                                        .replaceAll("&&", "&")
                                        .replaceAll("\\?$", "");
                 driver.get(previewUrl);
-                System.out.println("🔁 Redirected to cleaned preview URL: " + previewUrl);
-            } else {
-                System.out.println("ℹ️ Preview URL does not contain mode=preview: " + previewUrl);
+                test.info("Preview URL cleaned and redirected");
             }
 
             WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(60));
             WebElement iframe = longWait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("iframe")));
             driver.switchTo().frame(iframe);
 
-            // Send message to chatbot
             WebElement inputField = longWait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//input[@placeholder='Type a message...']")));
             inputField.clear();
             inputField.sendKeys("Schedule Site Visit");
-            System.out.println("✏️ Typed: Schedule Site Visit");
-
-            Thread.sleep(20000); // Wait for bot response to complete
+            Thread.sleep(20000);
             inputField.sendKeys(Keys.ENTER);
-            System.out.println("✅ Message sent after 20 seconds delay.");
+            test.pass("Bot message sent: Schedule Site Visit");
 
-            // Fill out the lead form
+            // Random data
+            String randomName = generateRandomName(7);
+            String randomEmail = randomName.toLowerCase() + "@example.com";
+            String randomPhone = "9" + (long)(Math.random() * 1_000_000_000L);
+
             WebDriverWait formWait = new WebDriverWait(driver, Duration.ofSeconds(30));
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Name']")))
+                    .sendKeys(randomName);
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Email']")))
+                    .sendKeys(randomEmail);
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Phone']")))
+                    .sendKeys(randomPhone);
 
-            WebElement nameField = formWait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.xpath("//input[@placeholder='Name']")));
-            nameField.sendKeys("Naveen Kumar");
+            WebElement submitBtn = formWait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//button[normalize-space()='Submit']")));
 
-            WebElement emailField = formWait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.xpath("//input[@placeholder='Email']")));
-            emailField.sendKeys("naveen@example.com");
-
-            WebElement phoneField = formWait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.xpath("//input[@placeholder='Phone']")));
-            phoneField.sendKeys("9876543210");
-
-            // Locate Submit button and handle edge cases
-            formWait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//button[normalize-space()='Submit']")));
-            WebElement submitBtn = driver.findElement(By.xpath("//button[normalize-space()='Submit']"));
-
-            // Scroll into view
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", submitBtn);
-            Thread.sleep(1000); // Give UI time to settle
-
+            Thread.sleep(1000);
             try {
                 submitBtn.click();
             } catch (Exception e) {
-                System.out.println("⚠️ Normal click failed, retrying with JS.");
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", submitBtn);
             }
 
-            System.out.println("✅ Lead form submitted successfully.");
+            test.pass("Lead form submitted with name: " + randomName +
+                      ", email: " + randomEmail +
+                      ", phone: " + randomPhone);
 
         } catch (Exception e) {
-            System.out.println("❌ Error: " + e.getMessage());
+            test.fail("❌ Exception occurred: " + e.getMessage());
         } finally {
-            // Uncomment if you want the browser to close automatically
             // driver.quit();
+            extent.flush();
         }
     }
 }
