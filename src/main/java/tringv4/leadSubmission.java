@@ -44,7 +44,7 @@ public class leadSubmission {
         WebDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-
+    //using try catch
         try {
             test.info("Navigating to login page");
             driver.get("https://app.tringlabs.ai/auth/signin");
@@ -123,7 +123,7 @@ public class leadSubmission {
             }
 
             test.pass("Lead form submitted with name: " + randomName +
-                      ", email: " + randomEmail +
+                      ", email: " + randomEmail +   
                       ", phone: " + randomPhone);
 
         } catch (Exception e) {
