@@ -16,17 +16,13 @@ pipeline {
         stage('Build Project') {
             steps {
                 sh '''
-                    echo "Using Java version:"
-                    ${JAVA_HOME}/bin/java -version
+                    echo "Java version:"
+                    java -version
 
-                    echo "Setting JAVA_HOME explicitly"
-                    export JAVA_HOME=${JAVA_HOME}
-                    export PATH=${JAVA_HOME}/bin:$PATH
-
-                    echo "Using Maven version:"
+                    echo "Maven version:"
                     mvn -version
 
-                    echo "Running Maven build"
+                    echo "Running Maven build..."
                     mvn clean install
                 '''
             }
@@ -35,7 +31,7 @@ pipeline {
         stage('Run Automation Test') {
             steps {
                 sh '''
-                    echo "Running Test Class"
+                    echo "Executing leadSubmission class..."
                     java -cp target/classes:target/dependency/* tringv4.leadSubmission
                 '''
             }
