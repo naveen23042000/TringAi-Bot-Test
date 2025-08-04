@@ -1,8 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        JAVA_HOME = "/opt/jdk-17"
+        PATH = "${JAVA_HOME}/bin:${env.PATH}"
+    }
+
     tools {
-        jdk 'Java 17'
         maven 'Maven-3.9.6'
     }
 
@@ -15,6 +19,8 @@ pipeline {
 
         stage('Build Project') {
             steps {
+                sh 'echo "Using Java version:" && java -version'
+                sh 'echo "Using Maven version:" && mvn -version'
                 sh 'mvn clean install'
             }
         }
