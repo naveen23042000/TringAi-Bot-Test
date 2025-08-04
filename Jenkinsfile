@@ -6,10 +6,6 @@ pipeline {
         PATH = "${JAVA_HOME}/bin:${env.PATH}"
     }
 
-    tools {
-        maven 'Maven-3.9.6'
-    }
-
     stages {
         stage('Checkout Code') {
             steps {
@@ -19,15 +15,29 @@ pipeline {
 
         stage('Build Project') {
             steps {
-                sh 'echo Using Java version: && java -version'
-                sh 'echo Using Maven version: && mvn -version'
-                sh 'mvn clean install'
+                sh '''
+                    echo "Using Java version:"
+                    ${JAVA_HOME}/bin/java -version
+
+                    echo "Setting JAVA_HOME explicitly"
+                    export JAVA_HOME=${JAVA_HOME}
+                    export PATH=${JAVA_HOME}/bin:$PATH
+
+                    echo "Using Maven version:"
+                    mvn -version
+
+                    echo "Running Maven build"
+                    mvn clean install
+                '''
             }
         }
 
         stage('Run Automation Test') {
             steps {
-                sh 'java -cp target/classes:target/dependency/* tringv4.leadSubmission'
+                sh '''
+                    echo "Running Test Class"
+                    java -cp target/classes:target/dependency/* tringv4.leadSubmission
+                '''
             }
         }
     }
