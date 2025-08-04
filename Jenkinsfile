@@ -19,8 +19,8 @@ pipeline {
 
         stage('Build Project') {
             steps {
-                sh 'echo "Using Java version:" && java -version'
-                sh 'echo "Using Maven version:" && mvn -version'
+                sh 'echo Using Java version: && java -version'
+                sh 'echo Using Maven version: && mvn -version'
                 sh 'mvn clean install'
             }
         }
