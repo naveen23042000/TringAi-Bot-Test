@@ -1,20 +1,7 @@
-package tringv4;
-
-import com.aventstack.extentreports.*;
-import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import com.aventstack.extentreports.MediaEntityBuilder;
-
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
+// ... other imports remain the same ...
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.*;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.util.*;
-
-public class LeadSubmission {
+public class leadSubmission {
 
     public static String generateRandomName(int length) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -27,29 +14,28 @@ public class LeadSubmission {
     }
 
     public static void main(String[] args) {
-        // 📁 Setup report directory with timestamp
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String reportDir = System.getProperty("user.dir") + "/test-output/leadReport";
         new File(reportDir).mkdirs();
 
-        // 📄 Setup Extent Report
         ExtentSparkReporter spark = new ExtentSparkReporter(reportDir + "/leadSubmissionReport_" + timestamp + ".html");
         ExtentReports extent = new ExtentReports();
         extent.attachReporter(spark);
         ExtentTest test = extent.createTest("Lead Submission Bot", "Automated chatbot lead submission test");
 
-        // 🧪 Setup WebDriver for headless Chrome
-        System.setProperty("webdriver.chrome.driver", "/path/to/chromedriver"); // Set path if required
+        // ✅ FIX: Set Chromium binary path
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless");  // Run Chrome in headless mode
-        options.addArguments("--incognito");
-        options.addArguments("--disable-dev-shm-usage");
+        options.setBinary("/usr/bin/chromium-browser"); // <--- This is the fix!
+        options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
-        options.addArguments("--disable-gpu");  // Disable GPU for headless mode
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--incognito");
 
-        // Optional: Set up environment variables for login credentials
-        String email = System.getenv("USER_EMAIL");  // Set this in Jenkins or environment variables
-        String password = System.getenv("USER_PASSWORD");  // Set this in Jenkins or environment variables
+        Map<String, Object> prefs = new HashMap<>();
+        prefs.put("credentials_enable_service", false);
+        prefs.put("profile.password_manager_enabled", false);
+        prefs.put("autofill.profile_enabled", false);
+        options.setExperimentalOption("prefs", prefs);
 
         WebDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
@@ -60,10 +46,10 @@ public class LeadSubmission {
             driver.get("https://app.tringlabs.ai/auth/signin");
 
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='email']")))
-                .sendKeys(email);
+                .sendKeys("naveenkumar@whitemastery.com");
 
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='password']")))
-                .sendKeys(password);
+                .sendKeys("12345678");
 
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Login']")))
                 .click();
@@ -103,11 +89,10 @@ public class LeadSubmission {
                     By.xpath("//input[@placeholder='Type a message...']")));
             inputField.clear();
             inputField.sendKeys("Schedule Site Visit");
-            Thread.sleep(20000); // wait for bot response
+            Thread.sleep(20000);
             inputField.sendKeys(Keys.ENTER);
             test.pass("📝 Sent: Schedule Site Visit");
 
-            // 🔀 Random user data
             String randomName = generateRandomName(7);
             String randomEmail = randomName.toLowerCase() + "@example.com";
             String randomPhone = "9" + (long)(Math.random() * 1_000_000_000L);
@@ -144,8 +129,8 @@ public class LeadSubmission {
                 test.fail("❌ Error during screenshot: " + screenshotException.getMessage());
             }
         } finally {
-            driver.quit();
-            extent.flush();  // Ensure the report is written out before the test ends
+            // driver.quit(); // Enable this in CI/CD
+            extent.flush();
         }
     }
 }
