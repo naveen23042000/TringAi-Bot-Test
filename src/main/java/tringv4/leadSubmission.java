@@ -1,7 +1,62 @@
-// ... other imports remain the same ...
+package tringv4;
+
+
+import java.io.File;
+import java.util.Date;
+import java.util.Random;
+import java.util.Map;
+import java.util.HashMap;
+import java.text.SimpleDateFormat;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
+
+// ExtentReports for reporting
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.aventstack.extentreports.MediaEntityBuilder;
+
+/*import java.io.File;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.MediaEntityBuilder;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;*/
 
 public class leadSubmission {
+	
+	
+	
 
     public static String generateRandomName(int length) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -10,27 +65,24 @@ public class leadSubmission {
         for (int i = 0; i < length; i++) {
             name.append(alphabet.charAt(random.nextInt(alphabet.length())));
         }
-        return name.toString();
+        return name.toString();													
     }
 
     public static void main(String[] args) {
+        // 📁 Setup report directory with timestamp
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String reportDir = System.getProperty("user.dir") + "/test-output/leadReport";
         new File(reportDir).mkdirs();
 
+        // 📄 Setup Extent Report
         ExtentSparkReporter spark = new ExtentSparkReporter(reportDir + "/leadSubmissionReport_" + timestamp + ".html");
         ExtentReports extent = new ExtentReports();
         extent.attachReporter(spark);
         ExtentTest test = extent.createTest("Lead Submission Bot", "Automated chatbot lead submission test");
 
-        // ✅ FIX: Set Chromium binary path
+        // 🧪 Setup WebDriver
         ChromeOptions options = new ChromeOptions();
-        options.setBinary("/usr/bin/chromium-browser"); // <--- This is the fix!
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--incognito");
-
         Map<String, Object> prefs = new HashMap<>();
         prefs.put("credentials_enable_service", false);
         prefs.put("profile.password_manager_enabled", false);
@@ -40,7 +92,7 @@ public class leadSubmission {
         WebDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-
+        											
         try {
             test.info("Navigating to login page");
             driver.get("https://app.tringlabs.ai/auth/signin");
@@ -89,10 +141,11 @@ public class leadSubmission {
                     By.xpath("//input[@placeholder='Type a message...']")));
             inputField.clear();
             inputField.sendKeys("Schedule Site Visit");
-            Thread.sleep(20000);
+            Thread.sleep(20000); // wait for bot response
             inputField.sendKeys(Keys.ENTER);
             test.pass("📝 Sent: Schedule Site Visit");
 
+            // 🔀 Random user data
             String randomName = generateRandomName(7);
             String randomEmail = randomName.toLowerCase() + "@example.com";
             String randomPhone = "9" + (long)(Math.random() * 1_000_000_000L);
@@ -129,7 +182,7 @@ public class leadSubmission {
                 test.fail("❌ Error during screenshot: " + screenshotException.getMessage());
             }
         } finally {
-            // driver.quit(); // Enable this in CI/CD
+            // driver.quit(); // uncomment for CI/CD runs
             extent.flush();
         }
     }
