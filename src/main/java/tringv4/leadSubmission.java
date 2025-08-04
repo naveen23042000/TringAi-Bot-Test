@@ -1,89 +1,148 @@
 package tringv4;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.Keys;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import com.aventstack.extentreports.*;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import io.github.bonigarcia.wdm.WebDriverManager;
 
 public class leadSubmission {
 
+    public static String generateRandomName(int length) {
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        StringBuilder name = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < length; i++) {
+            name.append(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+        return name.toString();
+    }
+
     public static void main(String[] args) {
-        // Setup Chrome options
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String reportDir = System.getProperty("user.dir") + "/test-output/leadReport";
+        new File(reportDir).mkdirs();
+
+        ExtentSparkReporter spark = new ExtentSparkReporter(reportDir + "/leadSubmissionReport_" + timestamp + ".html");
+        ExtentReports extent = new ExtentReports();
+        extent.attachReporter(spark);
+        ExtentTest test = extent.createTest("Lead Submission Bot", "Automated chatbot lead submission test");
+
+        // ✅ WebDriver Setup
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--incognito");
-        options.addArguments("--headless=new"); // ✅ Recommended for Jenkins
-        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--headless=new"); // ✅ Headless for CI/CD
+        options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
 
-        // Set path to chromedriver
-        System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
+        Map<String, Object> prefs = new HashMap<>();
+        prefs.put("credentials_enable_service", false);
+        prefs.put("profile.password_manager_enabled", false);
+        prefs.put("autofill.profile_enabled", false);
+        options.setExperimentalOption("prefs", prefs);
 
-        // ✅ Use final keyword to avoid lambda error
-        final WebDriver driver = new ChromeDriver(options);
+        WebDriver driver = new ChromeDriver(options);
+        driver.manage().window().setSize(new Dimension(1920, 1080));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         try {
-            driver.get("https://tring-admin.pripod.com/login");
-            driver.manage().window().maximize();
+            test.info("Navigating to login page");
+            driver.get("https://app.tringlabs.ai/auth/signin");
 
-            // Login
-            WebElement emailInput = new WebDriverWait(driver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@type='text']")));
-            emailInput.sendKeys("naveenkumar.r@troontechnologies.com");
-
-            WebElement passwordInput = driver.findElement(By.xpath("//input[@type='password']"));
-            passwordInput.sendKeys("Naveen@123");
-
-            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
-            loginButton.click();
-
-            // Wait for the dashboard to load and click "bot"
-            new WebDriverWait(driver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[contains(text(),'bot')]")))
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='email']")))
+                .sendKeys("naveenkumar@whitemastery.com");
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='password']")))
+                .sendKeys("12345678");
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Login']")))
                 .click();
+            test.pass("✅ Login successful");
 
-            // Wait for bot name to be clickable
-            WebElement botElement = new WebDriverWait(driver, Duration.ofSeconds(20))
-                .until(ExpectedConditions.elementToBeClickable(By.xpath("//div[contains(text(),'V4new')]")));
-            botElement.click();
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']"))).click();
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//input[@placeholder='Search bot...'])[2]")))
+                .sendKeys("TNPSC");
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[contains(text(),'View')]"))).click();
 
-            // Wait for preview icon and click it
-            WebElement previewIcon = new WebDriverWait(driver, Duration.ofSeconds(20))
-                .until(ExpectedConditions.elementToBeClickable(By.xpath("//div[@class='bot-card-footer']//div[@class='h-5 w-5']")));
-            previewIcon.click();
+            String originalWindow = driver.getWindowHandle();
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Preview')]"))).click();
 
-            // Wait for new tab to open
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            wait.until(driver1 -> driver.getWindowHandles().size() > 1);
+            wait.until(d -> driver.getWindowHandles().size() > 1);
+            for (String handle : driver.getWindowHandles()) {
+                if (!handle.equals(originalWindow)) {
+                    driver.switchTo().window(handle);
+                    break;
+                }
+            }
 
-            // Switch to the new tab
-            Set<String> windowHandles = driver.getWindowHandles();
-            List<String> windowHandlesList = new ArrayList<>(windowHandles);
-            driver.switchTo().window(windowHandlesList.get(1));
+            String previewUrl = driver.getCurrentUrl();
+            if (previewUrl.contains("mode=preview")) {
+                previewUrl = previewUrl.replaceAll("[&?]mode=preview", "")
+                                       .replaceAll("\\?&", "?")
+                                       .replaceAll("&&", "&")
+                                       .replaceAll("\\?$", "");
+                driver.get(previewUrl);
+                test.info("🔄 Cleaned preview URL");
+            }
 
-            // Wait for iframe and switch to it
-            WebElement iframe = new WebDriverWait(driver, Duration.ofSeconds(30))
-                .until(ExpectedConditions.presenceOfElementLocated(By.tagName("iframe")));
+            WebElement iframe = wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("iframe")));
             driver.switchTo().frame(iframe);
 
-            // Wait for the message input and type message
-            WebElement messageInput = new WebDriverWait(driver, Duration.ofSeconds(30))
-                .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("input.input-box")));
-            messageInput.sendKeys("Schedule Site Visit");
-            messageInput.sendKeys(Keys.ENTER);
+            WebElement inputField = wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//input[@placeholder='Type a message...']")));
+            inputField.clear();
+            inputField.sendKeys("Schedule Site Visit");
+            Thread.sleep(7000); // Wait for bot response
+            inputField.sendKeys(Keys.ENTER);
+            test.pass("📝 Sent: Schedule Site Visit");
+
+            // 🔀 Random user data
+            String randomName = generateRandomName(7);
+            String randomEmail = randomName.toLowerCase() + "@example.com";
+            String randomPhone = "9" + (long)(Math.random() * 1_000_000_000L);
+
+            WebDriverWait formWait = new WebDriverWait(driver, Duration.ofSeconds(30));
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Name']"))).sendKeys(randomName);
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Email']"))).sendKeys(randomEmail);
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Phone']"))).sendKeys(randomPhone);
+
+            WebElement submitBtn = formWait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Submit']")));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", submitBtn);
+            Thread.sleep(1000);
+            try {
+                submitBtn.click();
+            } catch (Exception e) {
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", submitBtn);
+            }
+
+            test.pass("✅ Lead submitted: " + randomName + ", " + randomEmail + ", " + randomPhone);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            try {
+                File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+                String screenshotPath = reportDir + "/error_screenshot.png";
+                File dest = new File(screenshotPath);
+                org.openqa.selenium.io.FileHandler.copy(screenshot, dest);
+                test.fail("❌ Exception: " + e.getMessage(),
+                          MediaEntityBuilder.createScreenCaptureFromPath("leadReport/error_screenshot.png").build());
+            } catch (Exception screenshotException) {
+                test.fail("❌ Error during screenshot: " + screenshotException.getMessage());
+            }
         } finally {
-            driver.quit();
+            driver.quit(); // ✅ Enabled for CI/CD
+            extent.flush();
         }
     }
 }
