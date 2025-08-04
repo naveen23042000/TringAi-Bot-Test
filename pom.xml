@@ -2,7 +2,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
-                             
+
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>TringAi</groupId>
@@ -26,6 +26,13 @@
       <version>4.22.0</version>
     </dependency>
 
+    <!-- ✅ WebDriverManager for auto driver resolution -->
+    <dependency>
+      <groupId>io.github.bonigarcia</groupId>
+      <artifactId>webdrivermanager</artifactId>
+      <version>5.8.0</version>
+    </dependency>
+
     <!-- ✅ ExtentReports (Spark Reporter) -->
     <dependency>
       <groupId>com.aventstack</groupId>
@@ -33,7 +40,7 @@
       <version>5.1.1</version>
     </dependency>
 
-    <!-- ✅ TestNG (optional, useful for CI or parallel runs) -->
+    <!-- ✅ TestNG (optional) -->
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
