@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.*;
 
-public class leadSubmission {
+public class LeadSubmission {
 
     public static String generateRandomName(int length) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -38,14 +38,18 @@ public class leadSubmission {
         extent.attachReporter(spark);
         ExtentTest test = extent.createTest("Lead Submission Bot", "Automated chatbot lead submission test");
 
-        // 🧪 Setup WebDriver
+        // 🧪 Setup WebDriver for headless Chrome
+        System.setProperty("webdriver.chrome.driver", "/path/to/chromedriver"); // Set path if required
         ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless");  // Run Chrome in headless mode
         options.addArguments("--incognito");
-        Map<String, Object> prefs = new HashMap<>();
-        prefs.put("credentials_enable_service", false);
-        prefs.put("profile.password_manager_enabled", false);
-        prefs.put("autofill.profile_enabled", false);
-        options.setExperimentalOption("prefs", prefs);
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-gpu");  // Disable GPU for headless mode
+
+        // Optional: Set up environment variables for login credentials
+        String email = System.getenv("USER_EMAIL");  // Set this in Jenkins or environment variables
+        String password = System.getenv("USER_PASSWORD");  // Set this in Jenkins or environment variables
 
         WebDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
@@ -56,10 +60,10 @@ public class leadSubmission {
             driver.get("https://app.tringlabs.ai/auth/signin");
 
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='email']")))
-                .sendKeys("naveenkumar@whitemastery.com");
+                .sendKeys(email);
 
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='password']")))
-                .sendKeys("12345678");
+                .sendKeys(password);
 
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Login']")))
                 .click();
@@ -140,8 +144,8 @@ public class leadSubmission {
                 test.fail("❌ Error during screenshot: " + screenshotException.getMessage());
             }
         } finally {
-            // driver.quit(); // uncomment for CI/CD runs
-            extent.flush();
+            driver.quit();
+            extent.flush();  // Ensure the report is written out before the test ends
         }
     }
 }
