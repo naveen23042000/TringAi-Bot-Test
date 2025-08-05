@@ -67,7 +67,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <mainClass>tringv4.leadSubmission</mainClass>
+          <mainClass>tringv4.chatBotCreation</mainClass>
         </configuration>
       </plugin>
     </plugins>
