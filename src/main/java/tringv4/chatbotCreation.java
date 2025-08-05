@@ -10,7 +10,7 @@ public class chatbotCreation {
     public static void main(String[] args) {
         try {
             // 🔐 Login
-            CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678");
+            CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678", driver, wait);
             WebDriver driver = CommonLogin.driver;
             WebDriverWait wait = CommonLogin.wait;
 
