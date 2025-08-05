@@ -4,15 +4,30 @@ import java.time.Duration;
 import java.util.Random;
 
 import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
 public class chatbotCreation {
     public static void main(String[] args) {
+        WebDriver driver = null;
+
         try {
+            // ✅ Set ChromeOptions for CI/CD
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--headless=new");
+            options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--disable-gpu");
+            options.addArguments("--remote-allow-origins=*");
+            options.addArguments("--window-size=1920,1080");
+            options.setBinary("/usr/bin/google-chrome"); // Ensure Chrome binary is specified
+
+            driver = new ChromeDriver(options);
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+
             // 🔐 Login
-            CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678");
-            WebDriver driver = CommonLogin.driver;
-            WebDriverWait wait = CommonLogin.wait;
+            CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678", driver, wait);
 
             // 📂 Navigate to Chatbots
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']"))).click();
@@ -102,6 +117,10 @@ public class chatbotCreation {
 
         } catch (Exception e) {
             System.out.println("❌ Error: " + e.getMessage());
+        } finally {
+            if (driver != null) {
+                driver.quit();
+            }
         }
     }
 
@@ -116,3 +135,4 @@ public class chatbotCreation {
         return name.toString();
     }
 }
+
