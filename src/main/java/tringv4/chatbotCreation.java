@@ -73,7 +73,7 @@ public class chatbotCreation {
             System.out.println("🛠️ Bot creation initiated...");
 
             WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(120));
-            longWait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Preview Bot']"))).click();
+            longWait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div/div[1]/div[2]/main/div/div[1]/div[2]/button[4]"))).click();
             System.out.println("🔍 Preview Bot clicked");
 
             // 🧭 Switch to new tab
