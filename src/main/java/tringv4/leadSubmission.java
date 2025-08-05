@@ -36,6 +36,7 @@ public class leadSubmission {
 
             // ChromeOptions for headless execution (suitable for Jenkins)
             ChromeOptions options = new ChromeOptions();
+            options.setBinary("/usr/bin/google-chrome");
             options.addArguments("--headless"); // Headless mode for Jenkins
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
