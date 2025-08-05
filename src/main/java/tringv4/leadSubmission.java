@@ -17,6 +17,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.File;
 import java.time.Duration;
 
 public class leadSubmission {
@@ -30,18 +31,29 @@ public class leadSubmission {
         WebDriver driver = null;
 
         try {
-            // Setup ChromeDriver with WebDriverManager
+            // Setup ChromeDriver
             WebDriverManager.chromedriver().setup();
 
             // Headless Chrome options for Linux/Jenkins
             ChromeOptions options = new ChromeOptions();
-            options.setBinary("/usr/bin/google-chrome"); // ✅ explicitly set Chrome binary path
-            options.addArguments("--headless"); // headless mode
-            options.addArguments("--no-sandbox"); // required for Jenkins
+            options.addArguments("--headless"); // Headless mode
+            options.addArguments("--no-sandbox"); // Required for Jenkins
             options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--disable-gpu");
             options.addArguments("--window-size=1920,1080");
 
+            // ✅ SET BINARY LOCATION EXPLICITLY (if needed)
+            File chromeBinary = new File("/usr/bin/google-chrome"); // Change this if using google-chrome-stable
+            if (chromeBinary.exists()) {
+                options.setBinary(chromeBinary);
+                System.out.println("✅ Using Chrome binary at: " + chromeBinary.getAbsolutePath());
+            } else {
+                System.err.println("❌ Chrome binary not found at: " + chromeBinary.getAbsolutePath());
+                throw new RuntimeException("Chrome binary not found");
+            }
+
+            // Launch browser
+            System.out.println("🚀 Launching ChromeDriver...");
             driver = new ChromeDriver(options);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
@@ -50,8 +62,8 @@ public class leadSubmission {
             driver.manage().window().maximize();
 
             // Step 2: Login
-            driver.findElement(By.name("email")).sendKeys("your-email@example.com");
-            driver.findElement(By.name("password")).sendKeys("your-password");
+            driver.findElement(By.name("email")).sendKeys("your-email@example.com"); // Replace
+            driver.findElement(By.name("password")).sendKeys("your-password"); // Replace
             driver.findElement(By.xpath("//button[contains(text(),'Sign In')]")).click();
 
             // Step 3: Wait for dashboard
@@ -72,20 +84,17 @@ public class leadSubmission {
             // Step 7: Switch to iframe
             wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.tagName("iframe")));
 
-            // Step 8: Wait for bot input to appear
+            // Step 8: Wait for input field and send message
             WebElement inputField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[type='text']")));
-
-            // Step 9: Send message
             inputField.sendKeys("Schedule Site Visit");
             inputField.sendKeys(Keys.ENTER);
 
-            // Step 10: Wait for response (adjust as needed)
+            // Step 9: Wait for response (adjust if needed)
             Thread.sleep(5000);
 
-            test.pass("Lead submission interaction successful.");
-
+            test.pass("✅ Lead submission interaction successful.");
         } catch (Exception e) {
-            test.fail("Test failed: " + e.getMessage());
+            test.fail("❌ Test failed: " + e.getMessage());
             e.printStackTrace();
         } finally {
             if (driver != null) {
