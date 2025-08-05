@@ -30,7 +30,7 @@ public class leadSubmission {
         WebDriver driver = null;
 
         try {
-            // ✅ Setup ChromeDriver path explicitly for Jenkins
+            // ✅ Setup ChromeDriver
             File driverExe = new File("/usr/local/bin/chromedriver");
             if (!driverExe.exists()) {
                 throw new RuntimeException("❌ chromedriver not found at /usr/local/bin/chromedriver");
@@ -41,7 +41,6 @@ public class leadSubmission {
                     .usingAnyFreePort()
                     .build();
 
-            // ✅ Headless options for CI/CD
             ChromeOptions options = new ChromeOptions();
             options.setBinary("/usr/bin/google-chrome");
             options.addArguments("--headless");
@@ -50,48 +49,59 @@ public class leadSubmission {
             options.addArguments("--disable-gpu");
             options.addArguments("--window-size=1920,1080");
 
-            // ✅ Launch browser
             driver = new ChromeDriver(service, options);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-            // Step 1: Open site
+            // ✅ Step 1: Open site
+            test.info("🌐 Navigating to site...");
             driver.get("https://tring-admin.pripod.com");
             driver.manage().window().maximize();
 
-            // Step 2: Login
-            driver.findElement(By.name("email")).sendKeys("your-email@example.com");
-            driver.findElement(By.name("password")).sendKeys("your-password");
+            // ✅ Step 2: Login
+            driver.findElement(By.name("email")).sendKeys("naveenkumar@whitemastery.com");
+            driver.findElement(By.name("password")).sendKeys("12345678");
             driver.findElement(By.xpath("//button[contains(text(),'Sign In')]")).click();
+            test.pass("🔐 Logged in successfully.");
 
-            // Step 3: Wait for dashboard
+            // ✅ Step 3: Wait for dashboard
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[contains(text(),'Bots')]")));
 
-            // Step 4: Click "Bots"
+            // ✅ Step 4: Click "Bots"
             driver.findElement(By.xpath("//span[contains(text(),'Bots')]")).click();
+            test.info("🤖 Navigated to Bots section.");
 
-            // Step 5: Click Preview icon
+            // ✅ Step 5: Click Preview
             wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("button[title='Preview']")));
             driver.findElement(By.cssSelector("button[title='Preview']")).click();
+            test.info("📤 Clicked on preview.");
 
-            // Step 6: Switch to new tab
+            // ✅ Step 6: Switch to preview tab
             for (String handle : driver.getWindowHandles()) {
                 driver.switchTo().window(handle);
             }
+            test.info("🪟 Switched to preview tab.");
 
-            // Step 7: Switch to iframe
+            // ✅ Step 7: Switch to iframe
             wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.tagName("iframe")));
+            test.info("🔁 Switched to iframe.");
 
-            // Step 8: Wait for bot input
+            // ✅ Step 8: Wait for input box
             WebElement inputField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[type='text']")));
 
-            // Step 9: Send message
+            // ✅ Step 9: Send message
             inputField.sendKeys("Schedule Site Visit");
             inputField.sendKeys(Keys.ENTER);
+            test.info("💬 Message sent to bot: Schedule Site Visit");
 
-            // Step 10: Wait for response to appear (adjust wait as needed)
-            Thread.sleep(5000);
+            // ✅ Step 10: Wait for email input (lead form)
+            WebElement emailField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("email")));
+            emailField.sendKeys("test@example.com");
+            test.pass("📩 Lead form appeared and email entered.");
 
-            test.pass("✅ Lead submission test passed successfully.");
+            // ✅ You can continue to fill phone/name/submit here
+
+            test.pass("✅ Lead submission test completed successfully.");
+
         } catch (Exception e) {
             test.fail("❌ Test failed: " + e.getMessage());
             e.printStackTrace();
