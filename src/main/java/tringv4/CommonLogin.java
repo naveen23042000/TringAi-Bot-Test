@@ -5,7 +5,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,35 +13,39 @@ public class CommonLogin {
     public static WebDriver driver;
     public static WebDriverWait wait;
 
-    public static void loginToTringApp(String email, String password) {
-        // ChromeOptions for better stability
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--incognito");
+    public static void loginToTringApp(String email, String password, WebDriver webDriver, WebDriverWait webWait) {
+        // If WebDriver is not passed, initialize it here
+        if (webDriver == null || webWait == null) {
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--incognito");
+            options.addArguments("--user-data-dir=/tmp/chrome-profile-" + System.currentTimeMillis()); // Unique profile path
 
-        Map<String, Object> prefs = new HashMap<>();
-        prefs.put("credentials_enable_service", false);
-        prefs.put("profile.password_manager_enabled", false);
-        prefs.put("autofill.profile_enabled", false);
-        options.setExperimentalOption("prefs", prefs);
+            // Disable Chrome popups
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("credentials_enable_service", false);
+            prefs.put("profile.password_manager_enabled", false);
+            prefs.put("autofill.profile_enabled", false);
+            options.setExperimentalOption("prefs", prefs);
 
-        // Initialize WebDriver and Wait
-        driver = new ChromeDriver(options);
-        driver.manage().window().maximize();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            driver = new ChromeDriver(options);
+            wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        } else {
+            driver = webDriver;
+            wait = webWait;
+        }
 
         try {
-            // Go to login page
+            // Step 1: Go to Login Page
             driver.get("https://app.tringlabs.ai/auth/signin");
 
-            // Enter email
+            // Step 2: Enter Email & Password
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='email']")))
                     .sendKeys(email);
 
-            // Enter password
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='password']")))
                     .sendKeys(password);
 
-            // Click Login
+            // Step 3: Click Login Button
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Login']")))
                     .click();
 
