@@ -3,15 +3,25 @@ package tringv4;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.*;
-import org.openqa.selenium.support.ui.*;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.chrome.ChromeDriverService;
+
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.time.Duration;
 
 public class leadSubmission {
     public static void main(String[] args) {
+        // ✅ Setup ExtentReports
         ExtentSparkReporter spark = new ExtentSparkReporter("report.html");
         ExtentReports extent = new ExtentReports();
         extent.attachReporter(spark);
@@ -20,10 +30,10 @@ public class leadSubmission {
         WebDriver driver = null;
 
         try {
-            // ✅ Explicitly define chromedriver path for Selenium 4.22+
-            File driverExe = new File("/usr/bin/chromedriver");
+            // ✅ Setup ChromeDriver path explicitly for Jenkins
+            File driverExe = new File("/usr/local/bin/chromedriver");
             if (!driverExe.exists()) {
-                throw new RuntimeException("❌ chromedriver not found at /usr/bin/chromedriver");
+                throw new RuntimeException("❌ chromedriver not found at /usr/local/bin/chromedriver");
             }
 
             ChromeDriverService service = new ChromeDriverService.Builder()
@@ -31,6 +41,7 @@ public class leadSubmission {
                     .usingAnyFreePort()
                     .build();
 
+            // ✅ Headless options for CI/CD
             ChromeOptions options = new ChromeOptions();
             options.setBinary("/usr/bin/google-chrome");
             options.addArguments("--headless");
@@ -39,11 +50,13 @@ public class leadSubmission {
             options.addArguments("--disable-gpu");
             options.addArguments("--window-size=1920,1080");
 
+            // ✅ Launch browser
             driver = new ChromeDriver(service, options);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
             // Step 1: Open site
             driver.get("https://tring-admin.pripod.com");
+            driver.manage().window().maximize();
 
             // Step 2: Login
             driver.findElement(By.name("email")).sendKeys("your-email@example.com");
@@ -68,16 +81,17 @@ public class leadSubmission {
             // Step 7: Switch to iframe
             wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.tagName("iframe")));
 
-            // Step 8: Wait for input field and send message
+            // Step 8: Wait for bot input
             WebElement inputField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[type='text']")));
+
+            // Step 9: Send message
             inputField.sendKeys("Schedule Site Visit");
             inputField.sendKeys(Keys.ENTER);
 
-            // Step 9: Wait for response
+            // Step 10: Wait for response to appear (adjust wait as needed)
             Thread.sleep(5000);
 
-            test.pass("✅ Lead submission interaction successful.");
-
+            test.pass("✅ Lead submission test passed successfully.");
         } catch (Exception e) {
             test.fail("❌ Test failed: " + e.getMessage());
             e.printStackTrace();
