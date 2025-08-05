@@ -4,44 +4,41 @@ import java.time.Duration;
 import java.util.Random;
 
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
 public class chatbotCreation {
-
     public static void main(String[] args) {
         WebDriver driver = null;
         WebDriverWait wait = null;
 
         try {
-            // Setup ChromeDriver
-            System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--disable-gpu");
-            options.addArguments("--headless=new");
-            options.addArguments("--remote-allow-origins=*");
-            options.addArguments("--user-data-dir=/tmp/unique-profile-" + System.currentTimeMillis());
-
-            driver = new ChromeDriver(options);
-            wait = new WebDriverWait(driver, Duration.ofSeconds(20));
-
             // 🔐 Login
             CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678", driver, wait);
+            driver = CommonLogin.driver;
+            wait = CommonLogin.wait;
+
+            System.out.println("✅ Logged in successfully");
 
             // 📂 Navigate to Chatbots
             WebElement chatbotMenu = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']")));
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", chatbotMenu);
-            Thread.sleep(1000);
             chatbotMenu.click();
+            System.out.println("📍 Current URL after clicking Chatbots: " + driver.getCurrentUrl());
 
-            // Wait for Add Chat Bot button
-            WebElement addChatBotBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(text(),'Add Chat Bot')]")));
-            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", addChatBotBtn);
-            wait.until(ExpectedConditions.elementToBeClickable(addChatBotBtn)).click();
+            // Wait for Add Chat Bot button with retry logic
+            Thread.sleep(4000); // Let the Chatbots page load
+            try {
+                WebElement addChatBotBtn = new WebDriverWait(driver, Duration.ofSeconds(30))
+                        .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(text(),'Add Chat Bot')]")));
+                ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", addChatBotBtn);
+                new WebDriverWait(driver, Duration.ofSeconds(10))
+                        .until(ExpectedConditions.elementToBeClickable(addChatBotBtn)).click();
+                System.out.println("➕ Add Chat Bot clicked");
+            } catch (TimeoutException e) {
+                System.out.println("❌ 'Add Chat Bot' button not found. Current page URL: " + driver.getCurrentUrl());
+                System.out.println(driver.getPageSource()); // For debugging
+                throw e;
+            }
 
             // 🏭 Select Industry
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@class='mb-6']//button)[1]"))).click();
@@ -132,10 +129,6 @@ public class chatbotCreation {
         } catch (Exception e) {
             System.out.println("❌ Error: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            if (driver != null) {
-                driver.quit();
-            }
         }
     }
 
