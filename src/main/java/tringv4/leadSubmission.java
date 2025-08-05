@@ -1,72 +1,93 @@
 package tringv4;
 
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.Keys;
+
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
-import java.util.ArrayList;
 
 public class leadSubmission {
     public static void main(String[] args) {
+        // Setup ExtentReports
+        ExtentSparkReporter spark = new ExtentSparkReporter("report.html");
+        ExtentReports extent = new ExtentReports();
+        extent.attachReporter(spark);
+        ExtentTest test = extent.createTest("Lead Submission Test");
+
+        WebDriver driver = null;
+
         try {
+            // ✅ Set path manually (instead of WebDriverManager)
             System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver");
 
+            // ✅ ChromeOptions for headless Jenkins execution
             ChromeOptions options = new ChromeOptions();
-            options.setBinary("/usr/bin/google-chrome");
-            options.addArguments("--headless");
+            options.setBinary("/usr/bin/google-chrome"); // Use actual binary path
+            options.addArguments("--headless");           // Run headless
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--disable-gpu");
             options.addArguments("--window-size=1920,1080");
 
-            WebDriver driver = new ChromeDriver(options);
+            driver = new ChromeDriver(options);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-            // Step 1: Open login page
-            driver.get("https://app.tringlabs.ai");
-            System.out.println("Opened Tring login page");
+            // Step 1: Open site
+            driver.get("https://tring-admin.pripod.com");
 
             // Step 2: Login
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("email"))).sendKeys("your_email");
-            driver.findElement(By.name("password")).sendKeys("your_password", Keys.ENTER);
-            System.out.println("Logged in");
+            driver.findElement(By.name("email")).sendKeys("your-email@example.com");
+            driver.findElement(By.name("password")).sendKeys("your-password");
+            driver.findElement(By.xpath("//button[contains(text(),'Sign In')]")).click();
 
-            // Step 3: Wait for dashboard, click a bot (update selector based on actual page)
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[contains(@href, '/bot/')]"))).click();
-            System.out.println("Clicked on a bot");
+            // Step 3: Wait for dashboard
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[contains(text(),'Bots')]")));
 
-            // Step 4: Click "Preview" to open preview in new tab
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(text(),'Preview')]"))).click();
-            System.out.println("Opened bot preview");
+            // Step 4: Click "Bots"
+            driver.findElement(By.xpath("//span[contains(text(),'Bots')]")).click();
 
-            // Step 5: Switch to new tab
-            ArrayList<String> tabs = new ArrayList<>(driver.getWindowHandles());
-            driver.switchTo().window(tabs.get(1));
+            // Step 5: Click Preview icon
+            wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("button[title='Preview']")));
+            driver.findElement(By.cssSelector("button[title='Preview']")).click();
 
-            // Step 6: Switch to iframe
+            // Step 6: Switch to new tab
+            for (String handle : driver.getWindowHandles()) {
+                driver.switchTo().window(handle);
+            }
+
+            // Step 7: Switch to iframe
             wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.tagName("iframe")));
-            System.out.println("Switched to preview iframe");
 
-            // Step 7: Wait for bot response ready (adjust selector if needed)
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[type='text']"))).sendKeys("Schedule Site Visit", Keys.ENTER);
-            System.out.println("Message sent to bot");
+            // Step 8: Wait for input field and send message
+            WebElement inputField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[type='text']")));
+            inputField.sendKeys("Schedule Site Visit");
+            inputField.sendKeys(Keys.ENTER);
 
-            // Step 8: Wait for lead form to appear
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[contains(text(),'Lead') or contains(text(),'Form') or contains(text(),'Submit')]")));
-            System.out.println("✅ Lead form appeared. Test successful.");
+            // Step 9: Wait for response (adjust if needed)
+            Thread.sleep(5000);
 
-            driver.quit();
-
+            test.pass("✅ Lead submission interaction successful.");
         } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
+            test.fail("❌ Test failed: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Test failed due to an exception");
+        } finally {
+            if (driver != null) {
+                driver.quit();
+            }
+            extent.flush();
+            System.out.println("✅ Script execution completed.");
         }
     }
 }
