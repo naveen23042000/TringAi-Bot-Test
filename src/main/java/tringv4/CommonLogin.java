@@ -3,6 +3,8 @@ package tringv4;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import java.time.Duration;
+
 import org.openqa.selenium.support.ui.*;
 
 import java.util.HashMap;
