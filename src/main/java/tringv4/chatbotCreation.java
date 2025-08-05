@@ -4,41 +4,36 @@ import java.time.Duration;
 import java.util.Random;
 
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
 public class chatbotCreation {
     public static void main(String[] args) {
-        WebDriver driver = null;
-
         try {
-            // ✅ Set ChromeOptions for CI/CD
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--headless=new");
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--disable-gpu");
-            options.addArguments("--remote-allow-origins=*");
-            options.addArguments("--window-size=1920,1080");
-            options.setBinary("/usr/bin/google-chrome"); // Ensure Chrome binary is specified
-
-            driver = new ChromeDriver(options);
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-
             // 🔐 Login
-            CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678", driver, wait);
+            CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678");
+            WebDriver driver = CommonLogin.driver;
+            WebDriverWait wait = CommonLogin.wait;
 
             // 📂 Navigate to Chatbots
-            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']"))).click();
-            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Add Chat Bot')]"))).click();
+            WebElement chatbotMenu = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']")));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", chatbotMenu);
+            Thread.sleep(1000);
+            chatbotMenu.click();
+
+            // Wait for Add Chat Bot button
+            WebElement addChatBotBtn = new WebDriverWait(driver, Duration.ofSeconds(30))
+                    .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(text(),'Add Chat Bot')]")));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", addChatBotBtn);
+            new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.elementToBeClickable(addChatBotBtn)).click();
 
             // 🏭 Select Industry
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@class='mb-6']//button)[1]"))).click();
 
             // 🌐 Website Source
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Website']"))).click();
-            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//main[@class='bg-white min-h-full']//input"))).sendKeys("https://tringlabs.ai");
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//main[@class='bg-white min-h-full']//input")))
+                    .sendKeys("https://tringlabs.ai");
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Import']"))).click();
 
             System.out.println("🕐 Importing website content...");
@@ -68,7 +63,7 @@ public class chatbotCreation {
             longWait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Preview Bot']"))).click();
             System.out.println("🔍 Preview Bot clicked");
 
-            // 🧭 Switch Tab
+            // 🧭 Switch to new tab
             String parent = driver.getWindowHandle();
             for (String win : driver.getWindowHandles()) {
                 if (!win.equals(parent)) {
@@ -85,24 +80,27 @@ public class chatbotCreation {
                 System.out.println("🔄 Cleaned preview URL loaded");
             }
 
-            // 💬 Switch to iframe and wait for bot to respond
+            // 💬 Switch to iframe and wait for bot response
             WebElement iframe = longWait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("iframe")));
             driver.switchTo().frame(iframe);
             System.out.println("🤖 Waiting for bot response...");
-            Thread.sleep(20000); // ⏳ Wait for bot to complete its initial response
+            Thread.sleep(20000); // Wait for bot to complete initial message
 
-            // 📩 Send "Schedule Site Visit"
+            // 📩 Send message
             WebElement input = longWait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@placeholder='Type a message...']")));
             input.clear();
             input.sendKeys("Schedule Site Visit");
             input.sendKeys(Keys.ENTER);
             System.out.println("📨 Message sent: Schedule Site Visit");
 
-            // ✍️ Wait and Fill Lead Form
+            // ✍️ Fill Lead Form
             WebDriverWait formWait = new WebDriverWait(driver, Duration.ofSeconds(30));
-            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Name']"))).sendKeys(generateRandomName(6));
-            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Email']"))).sendKeys("demo" + new Random().nextInt(9999) + "@mail.com");
-            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Phone']"))).sendKeys("9" + (long)(Math.random() * 1_000_000_000L));
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Name']")))
+                    .sendKeys(generateRandomName(6));
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Email']")))
+                    .sendKeys("demo" + new Random().nextInt(9999) + "@mail.com");
+            formWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Phone']")))
+                    .sendKeys("9" + (long) (Math.random() * 1_000_000_000L));
 
             WebElement submitBtn = formWait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Submit']")));
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", submitBtn);
@@ -117,10 +115,6 @@ public class chatbotCreation {
 
         } catch (Exception e) {
             System.out.println("❌ Error: " + e.getMessage());
-        } finally {
-            if (driver != null) {
-                driver.quit();
-            }
         }
     }
 
@@ -135,4 +129,3 @@ public class chatbotCreation {
         return name.toString();
     }
 }
-
