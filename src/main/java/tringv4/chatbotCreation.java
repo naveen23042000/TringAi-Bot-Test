@@ -2,8 +2,10 @@ package tringv4;
 
 import java.time.Duration;
 import java.util.Random;
+
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
 public class chatbotCreation {
@@ -13,14 +15,22 @@ public class chatbotCreation {
         WebDriverWait wait = null;
 
         try {
-            // ✅ Setup ChromeDriver
+            // Setup ChromeDriver
             System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-            driver = new ChromeDriver();
+
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--disable-gpu");
+            options.addArguments("--headless=new");
+            options.addArguments("--remote-allow-origins=*");
+            options.addArguments("--user-data-dir=/tmp/unique-profile-" + System.currentTimeMillis());
+
+            driver = new ChromeDriver(options);
             wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
             // 🔐 Login
             CommonLogin.loginToTringApp("naveenkumar@whitemastery.com", "12345678", driver, wait);
-            Thread.sleep(2000);
 
             // 📂 Navigate to Chatbots
             WebElement chatbotMenu = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Chatbots']")));
@@ -28,17 +38,15 @@ public class chatbotCreation {
             Thread.sleep(1000);
             chatbotMenu.click();
 
-            // ➕ Click Add Chat Bot
-            WebElement addChatBotBtn = new WebDriverWait(driver, Duration.ofSeconds(30))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(text(),'Add Chat Bot')]")));
+            // Wait for Add Chat Bot button
+            WebElement addChatBotBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(text(),'Add Chat Bot')]")));
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", addChatBotBtn);
-            new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(ExpectedConditions.elementToBeClickable(addChatBotBtn)).click();
+            wait.until(ExpectedConditions.elementToBeClickable(addChatBotBtn)).click();
 
             // 🏭 Select Industry
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@class='mb-6']//button)[1]"))).click();
 
-            // 🌐 Choose Source as Website
+            // 🌐 Website Source
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[normalize-space()='Website']"))).click();
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//main[@class='bg-white min-h-full']//input")))
                     .sendKeys("https://tringlabs.ai");
@@ -59,7 +67,7 @@ public class chatbotCreation {
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//label[@for='Customer Support Executive'])[1]"))).click();
             wait.until(ExpectedConditions.elementToBeClickable(nextBtnLocator)).click();
 
-            // 🎯 Bot Goal
+            // 🎯 Goal
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//label[@for='Enhancing Property Buying & Selling Experience'])[1]"))).click();
             wait.until(ExpectedConditions.elementToBeClickable(nextBtnLocator)).click();
 
@@ -67,12 +75,11 @@ public class chatbotCreation {
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Create Bot']"))).click();
             System.out.println("🛠️ Bot creation initiated...");
 
-            // 👀 Wait for Preview
             WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(120));
             longWait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Preview Bot']"))).click();
             System.out.println("🔍 Preview Bot clicked");
 
-            // 🧭 Switch to Preview Tab
+            // 🧭 Switch to new tab
             String parent = driver.getWindowHandle();
             for (String win : driver.getWindowHandles()) {
                 if (!win.equals(parent)) {
@@ -89,13 +96,13 @@ public class chatbotCreation {
                 System.out.println("🔄 Cleaned preview URL loaded");
             }
 
-            // 🤖 Switch to Bot Iframe
+            // 💬 Switch to iframe and wait for bot response
             WebElement iframe = longWait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("iframe")));
             driver.switchTo().frame(iframe);
             System.out.println("🤖 Waiting for bot response...");
-            Thread.sleep(20000); // Wait for initial response
+            Thread.sleep(20000); // Wait for bot to complete initial message
 
-            // 💬 Send Message
+            // 📩 Send message
             WebElement input = longWait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@placeholder='Type a message...']")));
             input.clear();
             input.sendKeys("Schedule Site Visit");
