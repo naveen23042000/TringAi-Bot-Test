@@ -58,7 +58,7 @@ public class leadSubmission {
 
             // Login
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='email']")))
-                .sendKeys("naveen@yopmail.com");
+                .sendKeys("naveenkumar@whitemastery.com");
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@type='password']")))
                 .sendKeys("12345678");
             wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Login']")))
